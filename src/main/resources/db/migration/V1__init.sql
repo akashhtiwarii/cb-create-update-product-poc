@@ -1,5 +1,5 @@
--- V1__init.sql
--- Flyway migration script to create Product Management schema
+-- V3__add_soft_delete_for_documents.sql
+-- Flyway migration script to add soft-delete capabilities to document tables
 
 -- 5.1 Product Table
 CREATE TABLE product (
@@ -34,7 +34,7 @@ CREATE TABLE product_version (
 -- update product.latest_version_id FK after product_version exists
 ALTER TABLE product
     ADD CONSTRAINT fk_product_latest_version FOREIGN KEY (latest_version_id)
-    REFERENCES product_version (id);
+    REFERENCES product_version (id) ON DELETE SET NULL;
 
 -- 5.3 WorkflowHistory Table
 CREATE TABLE workflow_history (
@@ -59,6 +59,7 @@ CREATE TABLE document (
     document_type VARCHAR(100) NOT NULL,
     latest_version_id UUID,
     uploaded_by_id UUID NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE' CHECK (status IN ('ACTIVE', 'INACTIVE')), -- ADDED FOR SOFT DELETE
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_document_product_version FOREIGN KEY (product_version_id)
@@ -73,6 +74,7 @@ CREATE TABLE document_version (
     file_name VARCHAR(255) NOT NULL,
     storage_path VARCHAR(500) NOT NULL,
     uploaded_by_id UUID NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE' CHECK (status IN ('ACTIVE', 'INACTIVE')), -- ADDED FOR SOFT DELETE
     uploaded_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     comment TEXT,
     CONSTRAINT fk_document FOREIGN KEY (document_id) REFERENCES document (id) ON DELETE CASCADE
@@ -81,4 +83,21 @@ CREATE TABLE document_version (
 -- update document.latest_version_id FK after document_version exists
 ALTER TABLE document
     ADD CONSTRAINT fk_document_latest_version FOREIGN KEY (latest_version_id)
-    REFERENCES document_version (id);
+    REFERENCES document_version (id) ON DELETE SET NULL;
+
+-- 5.6 DocumentAuditHistory Table
+CREATE TABLE document_audit_history (
+    id UUID PRIMARY KEY,
+    document_id UUID NOT NULL,
+    document_version_id UUID NOT NULL,
+    event VARCHAR(20) NOT NULL CHECK (
+        event IN ('UPLOADED', 'INACTIVE', 'SUPERSEDED')
+    ),
+    performed_by_id UUID NOT NULL,
+    comment TEXT,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_audit_document FOREIGN KEY (document_id)
+        REFERENCES document (id) ON DELETE CASCADE,
+    CONSTRAINT fk_audit_document_version FOREIGN KEY (document_version_id)
+        REFERENCES document_version (id) ON DELETE CASCADE
+);
