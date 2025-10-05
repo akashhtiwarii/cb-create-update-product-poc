@@ -7,6 +7,8 @@ import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -27,9 +29,10 @@ public class ProductVersion {
     @Column(name = "version_number", nullable = false)
     private Integer versionNumber;
 
-    @Column(nullable = false)
-    private String status;
+    @Column(name = "status", nullable = false)
+    private String productVersionStatus;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(nullable = false, columnDefinition = "jsonb")
     private String configuration;
 

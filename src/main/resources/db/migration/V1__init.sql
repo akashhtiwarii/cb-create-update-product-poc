@@ -7,7 +7,7 @@ CREATE TABLE product (
     name VARCHAR(255) NOT NULL,
     product_type VARCHAR(50) NOT NULL, -- e.g., UNSECURED_CARD, LOAN, etc.
     latest_version_id UUID,            -- references latest published version
-    status VARCHAR(20) NOT NULL CHECK (status IN ('ACTIVE', 'INACTIVE')),
+    status VARCHAR(20) NOT NULL CHECK (status IN ('ACTIVE', 'INACTIVE', 'DRAFT')),
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
