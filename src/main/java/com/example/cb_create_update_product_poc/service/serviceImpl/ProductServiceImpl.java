@@ -7,6 +7,7 @@ import com.example.cb_create_update_product_poc.entity.ProductVersion;
 import com.example.cb_create_update_product_poc.entity.WorkflowHistory;
 import com.example.cb_create_update_product_poc.exception.InvalidRequestException;
 import com.example.cb_create_update_product_poc.mapper.ProductMapper;
+import com.example.cb_create_update_product_poc.mapper.ProductVersionMapper;
 import com.example.cb_create_update_product_poc.repository.ProductRepository;
 import com.example.cb_create_update_product_poc.repository.ProductVersionRepository;
 import com.example.cb_create_update_product_poc.repository.WorkflowHistoryRepository;
@@ -29,45 +30,34 @@ public class ProductServiceImpl implements ProductService {
     private final TimeBasedEpochGenerator uuidV7Generator;
     private final ObjectMapper objectMapper;
     private final ProductMapper productMapper;
+    private final ProductVersionMapper productVersionMapper;
 
     public ProductServiceImpl(ProductRepository productRepository,
                               ProductVersionRepository productVersionRepository,
                               WorkflowHistoryRepository workflowHistoryRepository,
                               TimeBasedEpochGenerator uuidV7Generator,
                               ObjectMapper objectMapper,
-                              ProductMapper productMapper) {
+                              ProductMapper productMapper, ProductVersionMapper productVersionMapper) {
         this.productRepository = productRepository;
         this.productVersionRepository = productVersionRepository;
         this.workflowHistoryRepository = workflowHistoryRepository;
         this.uuidV7Generator = uuidV7Generator;
         this.objectMapper = objectMapper;
         this.productMapper = productMapper;
+        this.productVersionMapper = productVersionMapper;
     }
 
     @Override
     @Transactional
     public ProductDraftOutDto createProductDraft(ProductDraftInDto productDraftInDto, UUID userId) {
         // Step 1: Create and save the master Product entity
-        Product product = new Product();
-        product.setId(uuidV7Generator.generate());
-        product.setName(productDraftInDto.getName());
-        product.setProductType(productDraftInDto.getProductType());
-        product.setStatus("DRAFT");
-        product.setCreatedAt(LocalDateTime.now());
-        product.setUpdatedAt(LocalDateTime.now());
+        UUID productId = uuidV7Generator.generate();
+        UUID productVersionId = uuidV7Generator.generate();
+        Product product = productMapper.productDraftInDtoToProduct(productDraftInDto, productId, userId, "DRAFT");
         Product savedProduct = productRepository.save(product);
 
         // Step 2: Create the first ProductVersion in DRAFT state
-        ProductVersion productVersion = new ProductVersion();
-        productVersion.setId(uuidV7Generator.generate());
-        productVersion.setProductId(savedProduct.getId());
-        productVersion.setVersionNumber(1);
-        productVersion.setProductVersionStatus("DRAFT");
-        productVersion.setCreatedById(userId);
-        productVersion.setComment(productDraftInDto.getComment());
-        productVersion.setEffectiveStartDate(productDraftInDto.getEffectiveStartDate());
-        productVersion.setCreatedAt(LocalDateTime.now());
-        productVersion.setUpdatedAt(LocalDateTime.now());
+        ProductVersion productVersion = productVersionMapper.productDraftInDtoToProductVersion(productDraftInDto, productVersionId, productId, userId, 1, "DRAFT");
 
         try {
             String configurationJson = objectMapper.writeValueAsString(productDraftInDto.getConfiguration());

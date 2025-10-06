@@ -33,6 +33,6 @@ public class ProductController {
 
         ProductDraftOutDto createdDraft = productService.createProductDraft(productDraftInDto, userId);
 
-        return new ResponseEntity<>(ApiResponseOutDto.success(createdDraft), HttpStatus.CREATED);
+        return new ResponseEntity<>(ApiResponseOutDto.success(createdDraft, "Product draft created successfully"), HttpStatus.CREATED);
     }
 }

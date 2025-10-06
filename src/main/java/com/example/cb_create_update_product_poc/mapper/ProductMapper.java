@@ -7,9 +7,22 @@ import com.example.cb_create_update_product_poc.entity.ProductVersion;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Component
 public class ProductMapper {
+    public Product productDraftInDtoToProduct(ProductDraftInDto productDraftInDto, UUID productId, UUID userId, String status) {
+
+        Product product = new Product();
+        product.setId(productId);
+        product.setName(productDraftInDto.getName());
+        product.setProductType(productDraftInDto.getProductType());
+        product.setStatus(status);
+        product.setCreatedAt(LocalDateTime.now());
+        product.setUpdatedAt(LocalDateTime.now());
+        return product;
+    }
+
     public ProductDraftOutDto toProductDraftOutDto(Product product, ProductVersion productVersion) {
         if (product == null || productVersion == null) {
             return null;
